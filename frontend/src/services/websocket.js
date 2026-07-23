@@ -1,6 +1,8 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
 class WebSocketService {
     constructor() {
         this.client = null;
@@ -8,7 +10,7 @@ class WebSocketService {
 
     connect(onConnect, onError) {
         this.client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(`${API_BASE}/ws`),
             debug: function (str) {
                 console.log('STOMP: ' + str);
             },

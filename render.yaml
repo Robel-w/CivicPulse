@@ -1,0 +1,50 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Before deploying:
+# 1. Push this repo to GitHub/GitLab
+# 2. Create a hosted MySQL database (Render does not offer managed MySQL)
+# 3. In the Render dashboard, set SPRING_DATASOURCE_* on civicpulse-api
+# 4. Deploy via Dashboard → New → Blueprint → connect repo
+
+services:
+  - type: web
+    name: civicpulse-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/feedback/nearby?lat=0&lng=0&radiusKm=1
+    envVars:
+      - key: APP_PUBLIC_URL
+        fromService:
+          type: web
+          name: civicpulse-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: APP_CORS_ORIGINS
+        fromService:
+          type: web
+          name: civicpulse-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: web
+    name: civicpulse-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: civicpulse-api
+          envVarKey: RENDER_EXTERNAL_URL
